@@ -9,6 +9,7 @@
 #include <nordic/nrf52832_qfaa.dtsi>
 #include "pcb00003-pinctrl.dtsi"
 #include <zephyr/dt-bindings/input/input-event-codes.h>
+#include <zephyr/dt-bindings/gpio/nordic-nrf-gpio.h>
 
 / {
 	model = "ByteExplain PCB00003-NEU_SENSOR board using NRF52832";
@@ -24,6 +25,7 @@
 	aliases {
 		watchdog0 = &wdt0;
 	};
+
 };
 
 &adc {
@@ -48,6 +50,13 @@
 	pinctrl-0 = <&i2c0_default>;
 	pinctrl-1 = <&i2c0_sleep>;
 	pinctrl-names = "default", "sleep";
+	maxm86161: maxm86161@62 {
+		compatible = "adi,maxm86161";
+		status = "okay";
+		reg = <0x62>;
+		int-gpios = <&gpio0 20 (GPIO_ACTIVE_LOW|GPIO_PULL_UP)>;
+		sens-enable-gpios = <&gpio0 8 (GPIO_ACTIVE_HIGH|NRF_GPIO_DRIVE_H0H1)>;
+	};
 };
 
 &flash0 {

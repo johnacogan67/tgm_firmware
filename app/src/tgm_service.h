@@ -5,6 +5,8 @@
 #ifndef TGM_SERVICE_H_
 #define TGM_SERVICE_H_
 
+#include <app/drivers/maxm86161.h> // For ppg_sample, but fix this later
+
 /**@file
  * @defgroup tgm_service TGM Service implementation
  * @{
@@ -37,6 +39,12 @@
 #define BT_UUID_TGM_FW_VAL \
     BT_UUID_128_ENCODE(0x3a0ff006, 0x98c4, 0x46b2, 0x94af, 0x1aee0fd4c48e)
 
+#define BT_UUID_TGM_READ_PPG_REG_VAL \
+    BT_UUID_128_ENCODE(0x3a0ff007, 0x98c4, 0x46b2, 0x94af, 0x1aee0fd4c48e)
+
+#define BT_UUID_TGM_WRITE_PPG_REG_VAL \
+    BT_UUID_128_ENCODE(0x3a0ff008, 0x98c4, 0x46b2, 0x94af, 0x1aee0fd4c48e)
+
 #define BT_UUID_TGM BT_UUID_DECLARE_128(BT_UUID_TGM_VAL)
 #define BT_UUID_TGM_PPG BT_UUID_DECLARE_128(BT_UUID_TGM_PPG_VAL)
 #define BT_UUID_TGM_ACC BT_UUID_DECLARE_128(BT_UUID_TGM_ACC_VAL)
@@ -44,16 +52,11 @@
 #define BT_UUID_TGM_BAT BT_UUID_DECLARE_128(BT_UUID_TGM_BAT_VAL)
 #define BT_UUID_TGM_UUID BT_UUID_DECLARE_128(BT_UUID_TGM_UUID_VAL)
 #define BT_UUID_TGM_FW BT_UUID_DECLARE_128(BT_UUID_TGM_FW_VAL)
+#define BT_UUID_TGM_READ_PPG_REG BT_UUID_DECLARE_128(BT_UUID_TGM_READ_PPG_REG_VAL)
+#define BT_UUID_TGM_WRITE_PPG_REG BT_UUID_DECLARE_128(BT_UUID_TGM_WRITE_PPG_REG_VAL)
 
-#define CONFIG_PPG_SAMPLES_PER_FRAME 10
 #define CONFIG_ACC_SAMPLES_PER_FRAME 10
 #define CONFIG_TEMP_SAMPLES_PER_FRAME 10
-
-struct ppg_sample
-{
-    uint32_t red;
-    uint32_t ir;
-};
 
 /** @brief PPG Data Struct used by the TGM service to inform the client of new PPG data. */
 struct tgm_service_ppg_data_t
@@ -136,13 +139,12 @@ int tgm_service_init(struct tgm_service_cb *callbacks);
  * This function notifies the connected client device of an update to the PPG
  * data
  *
- * @param[in] ppg_data tgm_service_ppg_data_t struct containing a frame counter and PPG sensor data
- *
- *
+ * @param[in] ppg_data ppg_sample struct containing the PPG sensor data
+ * @param[in] sample_cnt Number of samples to be sent
  * @retval 0 If the operation was successful.
  *           Otherwise, a (negative) error code is returned.
  */
-int tgm_service_send_ppg_notify(struct tgm_service_ppg_data_t *ppg_data);
+int tgm_service_send_ppg_notify(struct ppg_sample *ppg_data, uint8_t sample_cnt);
 
 /** @brief Notify the client of an accelerometer data change.
  *
@@ -150,12 +152,10 @@ int tgm_service_send_ppg_notify(struct tgm_service_ppg_data_t *ppg_data);
  * data
  *
  * @param[in] acc_data tgm_service_acc_data_t struct containing a frame counter and accelerometer sensor data
- *
- *
  * @retval 0 If the operation was successful.
  *           Otherwise, a (negative) error code is returned.
  */
-int tgm_service_send_ppg_notify(struct tgm_service_ppg_data_t *ppg_data);
+int tgm_service_send_acc_notify(struct tgm_service_acc_data_t *ppg_data);
 
 /** @brief Notify the client of a temperature data change.
  *
@@ -182,6 +182,26 @@ int tgm_service_send_temp_notify(struct tgm_service_temp_data_t *temp_data);
  *           Otherwise, a (negative) error code is returned.
  */
 int tgm_service_send_battery_notify(int32_t battery_value);
+
+/**
+ * @brief Notify the client of a PPG register read.
+ * 
+ * This function notifies the connected client device of a read PPG register
+ * 
+ * @param[in] ppg_reg_data PPG register data
+ * @retval 0 If the operation was successful.
+ */
+int tgm_service_send_read_ppg_reg_notify(uint8_t ppg_reg_data);
+
+/**
+ * @brief Notify the client of a PPG register write.
+ * 
+ * This function notifies the connected client device of a write PPG register
+ * 
+ * @param[in] ppg_reg_data PPG register data
+ * @retval 0 If the operation was successful.
+ */
+int tgm_service_send_write_ppg_reg_notify(uint8_t ppg_reg_data);
 
 /**
  * @}

@@ -7,3 +7,12 @@ config MAXM86161
 	select GPIO
 	help
 	  Enable driver for MAXM86161 sensor.
+
+
+if MAXM86161
+
+module = MAXM86161
+module-str = maxm86161
+source "subsys/logging/Kconfig.template.log_config"
+
+endif # MAXM86161

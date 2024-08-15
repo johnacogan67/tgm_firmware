@@ -10,6 +10,7 @@
 
 #include <app_version.h>
 #include "tgm_service.h"
+#include "ppg.h"
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(tgm_service, CONFIG_APP_LOG_LEVEL);
@@ -18,6 +19,10 @@ static bool notify_ppg_data;
 static bool notify_acc_data;
 static bool notify_temp_data;
 static bool notify_battery;
+static bool notify_read_ppg_reg;
+static bool notify_write_ppg_reg;
+
+static uint32_t ppg_frame_counter = 0;
 
 static struct tgm_service_ppg_data_t tgm_service_ppg_data;
 static struct tgm_service_acc_data_t tgm_service_acc_data;
@@ -49,6 +54,18 @@ static void tgm_service_ccc_bat_cfg_changed(const struct bt_gatt_attr *attr, uin
 {
     LOG_INF("Enabled notifications for battery data");
     notify_battery = (value == BT_GATT_CCC_NOTIFY);
+}
+
+static void tgm_service_ccc_read_ppg_reg_data_cfg_changed(const struct bt_gatt_attr *attr, uint16_t value)
+{
+    LOG_INF("Enabled notifications for read ppg reg data");
+    notify_read_ppg_reg = (value == BT_GATT_CCC_NOTIFY);
+}
+
+static void tgm_service_ccc_write_ppg_reg_data_cfg_changed(const struct bt_gatt_attr *attr, uint16_t value)
+{
+    LOG_INF("Enabled notifications for write ppg reg data");
+    notify_write_ppg_reg = (value == BT_GATT_CCC_NOTIFY);
 }
 
 // Callback function to get the battery value when the client reads this value
@@ -88,6 +105,53 @@ static ssize_t get_fw_version(struct bt_conn *conn, const struct bt_gatt_attr *a
 
     LOG_INF("Reading firmware version");
     return bt_gatt_attr_read(conn, attr, buf, len, offset, value, strlen(value));
+}
+
+// Callback function to read the PPG register when the client writes to this value
+static ssize_t read_ppg_reg(struct bt_conn *conn, const struct bt_gatt_attr *attr, const void *buf, uint16_t len, uint16_t offset, uint8_t flags)
+{
+    if (len != 1u)
+    {
+        LOG_DBG("Invalid length for PPG register read");
+        return BT_GATT_ERR(BT_ATT_ERR_INVALID_ATTRIBUTE_LEN);
+    }
+
+    if (offset != 0)
+    {
+        LOG_DBG("Invalid offset for PPG register read");
+        return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
+    }
+
+    uint8_t ppg_reg = *((uint8_t *)buf);
+
+    LOG_INF("Reading PPG register");
+    ppg_read_reg(ppg_reg);
+
+    return len;
+}
+
+// Callback function to write the PPG register when the client writes to this value
+static ssize_t write_ppg_reg(struct bt_conn *conn, const struct bt_gatt_attr *attr, const void *buf, uint16_t len, uint16_t offset, uint8_t flags)
+{
+    if (len != 2u)
+    {
+        LOG_DBG("Invalid length for PPG register write");
+        return BT_GATT_ERR(BT_ATT_ERR_INVALID_ATTRIBUTE_LEN);
+    }
+
+    if (offset != 0)
+    {
+        LOG_DBG("Invalid offset for PPG register write");
+        return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
+    }
+
+    uint8_t ppg_reg = *((uint8_t *)buf);
+    uint8_t ppg_reg_data = *((uint8_t *)buf + 1);
+
+    LOG_INF("Writing PPG register");
+    ppg_write_reg(ppg_reg, ppg_reg_data);
+
+    return len;
 }
 
 BT_GATT_SERVICE_DEFINE(
@@ -132,7 +196,21 @@ BT_GATT_SERVICE_DEFINE(
         BT_GATT_PERM_READ,
         NULL, NULL,
         &tgm_service_temp_data),
-    BT_GATT_CCC(tgm_service_ccc_temp_data_cfg_changed, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE), );
+    BT_GATT_CCC(tgm_service_ccc_temp_data_cfg_changed, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
+    BT_GATT_CHARACTERISTIC(
+        BT_UUID_TGM_READ_PPG_REG,
+        BT_GATT_CHRC_WRITE | BT_GATT_CHRC_NOTIFY,
+        BT_GATT_PERM_WRITE,
+        NULL, read_ppg_reg,
+        NULL),
+    BT_GATT_CCC(tgm_service_ccc_read_ppg_reg_data_cfg_changed, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
+    BT_GATT_CHARACTERISTIC(
+        BT_UUID_TGM_WRITE_PPG_REG,
+        BT_GATT_CHRC_WRITE | BT_GATT_CHRC_NOTIFY,
+        BT_GATT_PERM_WRITE,
+        NULL, write_ppg_reg,
+        NULL),
+    BT_GATT_CCC(tgm_service_ccc_write_ppg_reg_data_cfg_changed, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE), );
 
 int tgm_service_init(struct tgm_service_cb *callbacks)
 {
@@ -151,17 +229,20 @@ int tgm_service_send_battery_notify(int32_t battery_value)
         return -EACCES;
     }
 
-    return bt_gatt_notify(NULL, &tgm_service_svc.attrs[4], &battery_value, sizeof(battery_value));
+    return bt_gatt_notify(NULL, &tgm_service_svc.attrs[6], &battery_value, sizeof(battery_value));
 }
 
-int tgm_service_send_ppg_notify(struct tgm_service_ppg_data_t *new_ppg_data)
+int tgm_service_send_ppg_notify(struct ppg_sample *ppg_data, uint8_t sample_cnt)
 {
+    struct tgm_service_ppg_data_t ppg_data_notify = {
+        .frame_counter = ppg_frame_counter++};
+    memcpy(&ppg_data_notify.ppg_data, ppg_data, sizeof(struct ppg_sample) * sample_cnt);
     if (!notify_ppg_data)
     {
         return -EACCES;
     }
 
-    return bt_gatt_notify(NULL, &tgm_service_svc.attrs[6], new_ppg_data, sizeof(*new_ppg_data));
+    return bt_gatt_notify(NULL, &tgm_service_svc.attrs[9], &ppg_data_notify, sizeof(struct tgm_service_ppg_data_t));
 }
 
 int tgm_service_send_acc_notify(struct tgm_service_acc_data_t *new_acc_data)
@@ -171,7 +252,7 @@ int tgm_service_send_acc_notify(struct tgm_service_acc_data_t *new_acc_data)
         return -EACCES;
     }
 
-    return bt_gatt_notify(NULL, &tgm_service_svc.attrs[8], new_acc_data, sizeof(*new_acc_data));
+    return bt_gatt_notify(NULL, &tgm_service_svc.attrs[12], new_acc_data, sizeof(*new_acc_data));
 }
 
 int tgm_service_send_temp_notify(struct tgm_service_temp_data_t *new_temp_data)
@@ -181,5 +262,25 @@ int tgm_service_send_temp_notify(struct tgm_service_temp_data_t *new_temp_data)
         return -EACCES;
     }
 
-    return bt_gatt_notify(NULL, &tgm_service_svc.attrs[10], new_temp_data, sizeof(*new_temp_data));
+    return bt_gatt_notify(NULL, &tgm_service_svc.attrs[15], new_temp_data, sizeof(*new_temp_data));
+}
+
+int tgm_service_send_read_ppg_reg_notify(uint8_t ppg_reg_data)
+{
+    if (!notify_read_ppg_reg)
+    {
+        return -EACCES;
+    }
+
+    return bt_gatt_notify(NULL, &tgm_service_svc.attrs[18], &ppg_reg_data, sizeof(ppg_reg_data));
+}
+
+int tgm_service_send_write_ppg_reg_notify(uint8_t ppg_reg_data)
+{
+    if (!notify_write_ppg_reg)
+    {
+        return -EACCES;
+    }
+
+    return bt_gatt_notify(NULL, &tgm_service_svc.attrs[21], &ppg_reg_data, sizeof(ppg_reg_data));
 }

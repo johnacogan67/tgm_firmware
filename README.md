@@ -41,3 +41,17 @@ Ensure that 'Build after generating configuration' is checked and click on 'Buil
 
 For future builds, you can use the 'Build' action in the nRF Connect pane.
 Debugging (make sure to select Optimization level 'Optimize for debugging -Og')) and Flashing a device can also be done through here
+
+### Streaming PPG data
+
+The device will stream PPG data (Red and IR) with each Bluetooth package containing CONFIG_PPG_SAMPLES_PER_FRAME (to be set in the application prj.conf file)
+
+### Tuning the PPG sensor parameters
+
+Currently the TGM service supports modifying the MAXM86161 registers on the go to allow for easy tuning of the parameters.
+To modify a PPG sensor register, write 2 bytes to the last characteristic (3a0ff008-...), the first one indicating which register to modify and the second one containing the value you want to write to the register.
+
+Example:
+
+- To modify the strength of the IR LED, write 0x24hh with hh the value of the register (in hex)
+- To modify the strength of the Red LED, write 0x25hh with hh the value of the register (in hex)
