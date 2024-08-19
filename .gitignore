@@ -9,8 +9,8 @@
 # build
 **/build*
 /twister-out*
-
 __pycache__/
 
 # docs
 /doc/_build*
+.DS_Store
