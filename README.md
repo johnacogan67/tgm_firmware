@@ -44,18 +44,19 @@ Debugging (make sure to select Optimization level 'Optimize for debugging -Og'))
 
 ### Streaming PPG data
 
-The device will stream PPG data (Red and IR) with each Bluetooth package containing CONFIG_PPG_SAMPLES_PER_FRAME (to be set in the application prj.conf file)
+The device will stream PPG data (Red, IR and Green) with each Bluetooth package containing CONFIG_PPG_SAMPLES_PER_FRAME (to be set in the application prj.conf file)
 
 #### Parsing the PPG data
 
-The PPG data is currently sampled at 50Hz (default). The amount of samples per data frame is configurable as the prj.conf file with the parameter CONFIG_PPG_SAMPLES_PER_FRAME. This is currently set at 25, meaning there should be a frame every 0.5 sec.
+The PPG data is currently sampled at 50Hz (default). The amount of samples per data frame is configurable as the prj.conf file with the parameter CONFIG_PPG_SAMPLES_PER_FRAME. This is currently set at 20, meaning there should be a frame every 0.4 sec.
 Each frame is built up as follows as structure of type tgm_service_ppg_data_t (see tgm_service.h):
 
 - Bytes 0-4: frame counter, this increments with every frame
-- Bytes 4-12: sample 1 of frame
+- Bytes 4-16: sample 1 of frame
   - Bytes 4-8: red sample
   - Bytes 8-12: IR sample
-- Bytes 12-20: sample 2 of frame
+  - Bytes 12-16: Green sample
+- Bytes 16-28: sample 2 of frame
   ...
 
 ### Tuning the PPG sensor parameters

@@ -11,6 +11,7 @@ struct ppg_sample
 {
     uint32_t red;
     uint32_t ir;
+    uint32_t green;
 };
 
 /**@file

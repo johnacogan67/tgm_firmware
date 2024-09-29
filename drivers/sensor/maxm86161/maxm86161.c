@@ -65,20 +65,23 @@ typedef enum
 
 } MAXM86161_REG_map_t;
 
+// Use R, IR and Green
+#define COLORS 3u
+
 int ppg_sensor_start(const struct i2c_dt_spec *i2c)
 {
 	int err = 0;
 
 	// Set the FIFO AFULL threshold based on desired FIFO_SIZE
-	uint8_t fifo_config1 = (128 - (2u * CONFIG_PPG_SAMPLES_PER_FRAME));
+	uint8_t fifo_config1 = (128 - (COLORS * CONFIG_PPG_SAMPLES_PER_FRAME));
 	err = i2c_burst_write_dt(i2c, MAXM86161_REG_FIFO_CONFIG1, &fifo_config1, 1);
 	if (err)
 	{
 		LOG_ERR("Failed to set FIFO AFULL threshold");
 	}
 
-	// Set the LED sequence to have red first and IR second
-	uint8_t led_seq_reg[3] = {0x23, 0x00, 0x00};
+	// Set the LED sequence to have red first, IR second and Green last (green = LED1, ir = LED2, red = LED3)
+	uint8_t led_seq_reg[3] = {0x23, 0x01, 0x00};
 	err = i2c_burst_write_dt(i2c, MAXM86161_REG_LED_SEQ_REG1, led_seq_reg, 3);
 	if (err)
 	{
@@ -111,7 +114,7 @@ int ppg_sensor_start(const struct i2c_dt_spec *i2c)
 
 	// Set the drive strength of the LEDs (green = LED1, ir = LED2, red = LED3)
 	// TODO tune these values, each count = 0.12mA with LED range set to 31mA
-	uint8_t led_pa[3] = {0, 128, 128};
+	uint8_t led_pa[3] = {128, 128, 128};
 	err = i2c_burst_write_dt(i2c, MAXM86161_REG_LED1_PA, led_pa, 3);
 	if (err)
 	{
@@ -203,10 +206,10 @@ int ppg_sensor_get_data(const struct i2c_dt_spec *i2c, struct ppg_sample *ppg_da
 	{
 		LOG_DBG("FIFO data count: %d", fifo_data_count);
 
-		if (fifo_data_count > CONFIG_PPG_SAMPLES_PER_FRAME * 2)
+		if (fifo_data_count > CONFIG_PPG_SAMPLES_PER_FRAME * COLORS)
 		{
 			LOG_WRN("FIFO overflow detected, discarding data");
-			fifo_data_count = CONFIG_PPG_SAMPLES_PER_FRAME * 2;
+			fifo_data_count = CONFIG_PPG_SAMPLES_PER_FRAME * COLORS;
 		}
 	}
 
@@ -218,13 +221,14 @@ int ppg_sensor_get_data(const struct i2c_dt_spec *i2c, struct ppg_sample *ppg_da
 		LOG_ERR("Failed to read FIFO data");
 	}
 
-	*sample_count = fifo_data_count / 2;
+	*sample_count = fifo_data_count / COLORS;
 	// Parse the data
 	for (int i = 0; i < *sample_count; i++)
 	{
 		ppg_data[i].red = (((fifo_data[i * 6] << 16) | (fifo_data[i * 6 + 1] << 8) | fifo_data[i * 6 + 2]) & 0x7ffff);
 		ppg_data[i].ir = (((fifo_data[i * 6 + 3] << 16) | (fifo_data[i * 6 + 4] << 8) | fifo_data[i * 6 + 5]) & 0x7ffff);
-		LOG_INF("PPG data: red = %d, ir = %d", ppg_data[i].red, ppg_data[i].ir);
+		ppg_data[i].green = (((fifo_data[i * 6 + 6] << 16) | (fifo_data[i * 6 + 7] << 8) | fifo_data[i * 6 + 8]) & 0x7ffff);
+		LOG_INF("PPG data: red = %d, ir = %d, green = %d", ppg_data[i].red, ppg_data[i].ir, ppg_data[i].green);
 	}
 
 	return 0;
