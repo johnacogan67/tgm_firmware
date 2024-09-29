@@ -1,8 +1,8 @@
 # Copyright (c) 2024 WeeGee bv
 
-description: MAXM86161 Integrated Optical Module for Heart Rate and SpO2 Measurement
+description: LIS2DTW12 MEMS digital output dual motion and temperature sensor
 
-compatible: "adi,maxm86161"
+compatible: "st,lis2dtw12"
 
 include: [sensor-device.yaml, i2c-device.yaml]
 

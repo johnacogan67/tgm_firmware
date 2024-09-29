@@ -68,3 +68,20 @@ Example:
 
 - To modify the strength of the IR LED, write 0x24hh with hh the value of the register (in hex)
 - To modify the strength of the Red LED, write 0x25hh with hh the value of the register (in hex)
+
+### Streaming accelerometer data
+
+The device will stream accelerometer data (x, y and z) with each Bluetooth package containing CONFIG_ACC_SAMPLES_PER_FRAME (to be set in the application prj.conf file)
+
+#### Parsing the accelerometer data
+
+The accelerometer data is currently sampled at 50Hz (default). The amount of samples per data frame is configurable as the prj.conf file with the parameter CONFIG_ACC_SAMPLES_PER_FRAME. This is currently set at 25, meaning there should be a frame every 0.5 sec.
+Each frame is built up as follows as structure of type tgm_service_acc_data_t (see tgm_service.h):
+
+- Bytes 0-4: frame counter, this increments with every frame
+- Bytes 4-10: sample 1 of frame
+  - Bytes 4-6: x sample
+  - Bytes 6-8: y sample
+  - Bytes 8-10: z sample
+- Bytes 10-16: sample 2 of frame
+  ...

@@ -16,6 +16,12 @@ config PPG_SAMPLES_PER_FRAME
     help
       Number of PPG samples per frame. 
 
+config ACC_SAMPLES_PER_FRAME
+    int "Number of ACC samples per frame"
+    default 25
+    help
+      Number of accelerometer samples per frame. 
+
 module = APP
 module-str = APP
 source "subsys/logging/Kconfig.template.log_config"

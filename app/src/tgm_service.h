@@ -6,6 +6,7 @@
 #define TGM_SERVICE_H_
 
 #include <app/drivers/maxm86161.h> // For ppg_sample, but fix this later
+#include <app/drivers/lis2dtw12.h> // For acc_sample, but fix this later
 
 /**@file
  * @defgroup tgm_service TGM Service implementation
@@ -55,7 +56,6 @@
 #define BT_UUID_TGM_READ_PPG_REG BT_UUID_DECLARE_128(BT_UUID_TGM_READ_PPG_REG_VAL)
 #define BT_UUID_TGM_WRITE_PPG_REG BT_UUID_DECLARE_128(BT_UUID_TGM_WRITE_PPG_REG_VAL)
 
-#define CONFIG_ACC_SAMPLES_PER_FRAME 10
 #define CONFIG_TEMP_SAMPLES_PER_FRAME 10
 
 /** @brief PPG Data Struct used by the TGM service to inform the client of new PPG data. */
@@ -67,12 +67,6 @@ struct tgm_service_ppg_data_t
     struct ppg_sample ppg_data[CONFIG_PPG_SAMPLES_PER_FRAME];
 };
 
-struct acc_sample
-{
-    int16_t x;
-    int16_t y;
-    int16_t z;
-};
 /** @brief Accelerometer Data Struct used by the TGM service to inform the client of new accelerometer data. */
 struct tgm_service_acc_data_t
 {
@@ -151,11 +145,12 @@ int tgm_service_send_ppg_notify(struct ppg_sample *ppg_data, uint8_t sample_cnt)
  * This function notifies the connected client device of an update to the accelerometer
  * data
  *
- * @param[in] acc_data tgm_service_acc_data_t struct containing a frame counter and accelerometer sensor data
+ * @param[in] acc_data acc_sample struct containing the accelerometer sensor data
+ * @param[in] sample_cnt Number of samples to be sent
  * @retval 0 If the operation was successful.
  *           Otherwise, a (negative) error code is returned.
  */
-int tgm_service_send_acc_notify(struct tgm_service_acc_data_t *ppg_data);
+int tgm_service_send_acc_notify(struct acc_sample *acc_data, uint8_t sample_cnt);
 
 /** @brief Notify the client of a temperature data change.
  *
@@ -185,9 +180,9 @@ int tgm_service_send_battery_notify(int32_t battery_value);
 
 /**
  * @brief Notify the client of a PPG register read.
- * 
+ *
  * This function notifies the connected client device of a read PPG register
- * 
+ *
  * @param[in] ppg_reg_data PPG register data
  * @retval 0 If the operation was successful.
  */
@@ -195,9 +190,9 @@ int tgm_service_send_read_ppg_reg_notify(uint8_t ppg_reg_data);
 
 /**
  * @brief Notify the client of a PPG register write.
- * 
+ *
  * This function notifies the connected client device of a write PPG register
- * 
+ *
  * @param[in] ppg_reg_data PPG register data
  * @retval 0 If the operation was successful.
  */

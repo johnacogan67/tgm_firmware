@@ -228,7 +228,7 @@ int ppg_sensor_get_data(const struct i2c_dt_spec *i2c, struct ppg_sample *ppg_da
 		ppg_data[i].red = (((fifo_data[i * 6] << 16) | (fifo_data[i * 6 + 1] << 8) | fifo_data[i * 6 + 2]) & 0x7ffff);
 		ppg_data[i].ir = (((fifo_data[i * 6 + 3] << 16) | (fifo_data[i * 6 + 4] << 8) | fifo_data[i * 6 + 5]) & 0x7ffff);
 		ppg_data[i].green = (((fifo_data[i * 6 + 6] << 16) | (fifo_data[i * 6 + 7] << 8) | fifo_data[i * 6 + 8]) & 0x7ffff);
-		LOG_INF("PPG data: red = %d, ir = %d, green = %d", ppg_data[i].red, ppg_data[i].ir, ppg_data[i].green);
+		LOG_DBG("PPG data: red = %d, ir = %d, green = %d", ppg_data[i].red, ppg_data[i].ir, ppg_data[i].green);
 	}
 
 	return 0;

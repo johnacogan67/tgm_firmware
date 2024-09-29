@@ -23,6 +23,7 @@ static bool notify_read_ppg_reg;
 static bool notify_write_ppg_reg;
 
 static uint32_t ppg_frame_counter = 0;
+static uint32_t acc_frame_counter = 0;
 
 static struct tgm_service_ppg_data_t tgm_service_ppg_data;
 static struct tgm_service_acc_data_t tgm_service_acc_data;
@@ -245,14 +246,17 @@ int tgm_service_send_ppg_notify(struct ppg_sample *ppg_data, uint8_t sample_cnt)
     return bt_gatt_notify(NULL, &tgm_service_svc.attrs[9], &ppg_data_notify, sizeof(struct tgm_service_ppg_data_t));
 }
 
-int tgm_service_send_acc_notify(struct tgm_service_acc_data_t *new_acc_data)
+int tgm_service_send_acc_notify(struct acc_sample *acc_data, uint8_t sample_cnt)
 {
+    struct tgm_service_acc_data_t acc_data_notify = {
+        .frame_counter = acc_frame_counter++};
+    memcpy(&acc_data_notify.acc_data, acc_data, sizeof(struct acc_sample) * sample_cnt);
     if (!notify_acc_data)
     {
         return -EACCES;
     }
 
-    return bt_gatt_notify(NULL, &tgm_service_svc.attrs[12], new_acc_data, sizeof(*new_acc_data));
+    return bt_gatt_notify(NULL, &tgm_service_svc.attrs[12], &acc_data_notify, sizeof(struct tgm_service_acc_data_t));
 }
 
 int tgm_service_send_temp_notify(struct tgm_service_temp_data_t *new_temp_data)

@@ -3,4 +3,5 @@
 
 if SENSOR
 rsource "maxm86161/Kconfig"
+rsource "lis2dtw12/Kconfig"
 endif # SENSOR

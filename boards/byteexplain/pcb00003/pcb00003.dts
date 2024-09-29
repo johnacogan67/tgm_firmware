@@ -50,12 +50,17 @@
 	pinctrl-0 = <&i2c0_default>;
 	pinctrl-1 = <&i2c0_sleep>;
 	pinctrl-names = "default", "sleep";
+	lis2dtw12: lis2dtw12@19 {
+		compatible = "st,lis2dtw12";
+		status = "okay";
+		reg = <0x19>;
+		int-gpios = <&gpio0 6 (GPIO_ACTIVE_HIGH)>;
+	};
 	maxm86161: maxm86161@62 {
 		compatible = "adi,maxm86161";
 		status = "okay";
 		reg = <0x62>;
 		int-gpios = <&gpio0 20 (GPIO_ACTIVE_LOW|GPIO_PULL_UP)>;
-		sens-enable-gpios = <&gpio0 8 (GPIO_ACTIVE_HIGH|NRF_GPIO_DRIVE_H0H1)>;
 	};
 };
 

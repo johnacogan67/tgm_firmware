@@ -31,13 +31,12 @@ static struct ppg_reg_work_t ppg_reg_work;
 #include <app/drivers/maxm86161.h>
 
 #define MAXM86161_NODE DT_NODELABEL(maxm86161)
-static struct gpio_dt_spec sens_enable = GPIO_DT_SPEC_GET(MAXM86161_NODE, sens_enable_gpios);
 static struct gpio_dt_spec ppg_int = GPIO_DT_SPEC_GET(MAXM86161_NODE, int_gpios);
 
 static struct i2c_dt_spec i2c = I2C_DT_SPEC_GET(MAXM86161_NODE);
 #else
 // Give a build error
-#error "No valide PPG sensor driver enabled"
+#error "No valid PPG sensor driver enabled"
 #endif
 
 /**
@@ -99,11 +98,8 @@ int ppg_init(void)
         return -ENODEV;
     }
 
-    // Initiailize the sens_enable pin as output
-    int err = gpio_pin_configure_dt(&sens_enable, GPIO_OUTPUT_HIGH);
-
     // Intialize the int pin as input
-    err = gpio_pin_configure_dt(&ppg_int, GPIO_INPUT);
+    int err = gpio_pin_configure_dt(&ppg_int, GPIO_INPUT);
     if (err)
     {
         LOG_ERR("Failed to configure PPG sensor int pin as input");
@@ -128,19 +124,8 @@ int ppg_init(void)
 
 int ppg_start(void)
 {
-    // Enable the power for the PPG sensor
-    int err = gpio_pin_set_dt(&sens_enable, 1);
-    if (err)
-    {
-        LOG_ERR("Failed to enable PPG sensor power");
-        return err;
-    }
-
-    // Wait for the sensor to power up
-    k_sleep(K_MSEC(10));
-
     // Enable the interrupt
-    err = gpio_pin_interrupt_configure_dt(&ppg_int, GPIO_INT_EDGE_TO_ACTIVE);
+    int err = gpio_pin_interrupt_configure_dt(&ppg_int, GPIO_INT_EDGE_TO_ACTIVE);
     if (err)
     {
         LOG_ERR("Failed to configure PPG sensor int pin interrupt");

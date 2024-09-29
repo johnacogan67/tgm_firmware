@@ -1,5 +1,4 @@
-# Copyright (c) 2021 Nordic Semiconductor ASA
-# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2024 WeeGee bv
 
 config MAXM86161
 	bool "Driver for MAXM86161"
