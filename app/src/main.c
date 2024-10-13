@@ -11,6 +11,8 @@
 #include "ble.h"
 #include "ppg.h"
 #include "acc.h"
+#include "battery.h"
+#include "tgm_service.h"
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
@@ -20,6 +22,15 @@ LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 
 static const struct device *gpio = DEVICE_DT_GET(GPIO_NODE);
 
+int32_t battery_voltage_read(void)
+{
+	return battery_get_last_measurement();
+}
+
+struct tgm_service_cb tgm_service_callbacks = {
+	.bat_cb = battery_voltage_read,
+};
+
 int main(void)
 {
 	int err;
@@ -27,7 +38,8 @@ int main(void)
 	printk("TGM Application %s\n", APP_VERSION_STRING);
 
 	// Initialize the gpio port
-	if (!device_is_ready(gpio)){
+	if (!device_is_ready(gpio))
+	{
 		LOG_ERR("GPIO is not ready");
 		return -1;
 	}
@@ -42,7 +54,22 @@ int main(void)
 		return err;
 	}
 
+	tgm_service_init(&tgm_service_callbacks);
+
 	ble_adv_start();
+
+	err = battery_init(NULL);
+	if (err)
+	{
+		LOG_ERR("battery_init() returned %d", err);
+	}
+
+	// Start the battery measurement before any of the sensors are started
+	err = battery_start_measurement();
+	if (err)
+	{
+		LOG_ERR("battery_start_measurement() returned %d", err);
+	}
 
 	err = ppg_init();
 	if (err)

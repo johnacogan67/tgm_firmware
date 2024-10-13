@@ -63,7 +63,7 @@ static void acc_read_data(struct k_work *work)
     err = tgm_service_send_acc_notify(acc_data, sample_count);
     if (err)
     {
-        LOG_ERR("Failed to send accelerometer data notification");
+        LOG_DBG("Failed to send accelerometer data notification");
         return;
     }
 
@@ -73,7 +73,7 @@ static void acc_read_data(struct k_work *work)
 int acc_init(void)
 {
     int err;
-    
+
     // Initialize the I2C bus
     if (!i2c_is_ready_dt(&i2c))
     {

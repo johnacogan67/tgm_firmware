@@ -85,3 +85,11 @@ Each frame is built up as follows as structure of type tgm_service_acc_data_t (s
   - Bytes 8-10: z sample
 - Bytes 10-16: sample 2 of frame
   ...
+
+### Streaming battery voltage
+
+The device will stream battery voltage data at an interval defined by CONFIG_BATTERY_MEASUREMENT_INTERVAL. The default value is set to 300 seconds (5 minutes but this value can be modified based on requirements
+
+#### Parsing the battery voltage data
+
+The battery voltage is sent as a int32_t, which means that 4 bytes are sent with every measurement event. The value of the battery voltage is reported in mV.

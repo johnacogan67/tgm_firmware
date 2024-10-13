@@ -22,6 +22,12 @@ config ACC_SAMPLES_PER_FRAME
     help
       Number of accelerometer samples per frame. 
 
+  config BATTERY_MEASUREMENT_INTERVAL
+    int "Battery measurement interval"
+    default 300
+    help
+      Battery sampling interval in seconds.
+
 module = APP
 module-str = APP
 source "subsys/logging/Kconfig.template.log_config"

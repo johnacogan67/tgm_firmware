@@ -75,7 +75,7 @@ static void ppg_read_data(struct k_work *work)
     err = tgm_service_send_ppg_notify(ppg_data, sample_count);
     if (err)
     {
-        LOG_ERR("Failed to send PPG data notification");
+        LOG_DBG("Failed to send PPG data notification");
         return;
     }
 
