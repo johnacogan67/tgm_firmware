@@ -5,6 +5,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/sensor.h>
 
 #include <app_version.h>
 
@@ -21,6 +22,39 @@ LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 #define SENS_ENABLE_PIN 8
 
 static const struct device *gpio = DEVICE_DT_GET(GPIO_NODE);
+static const struct device *temp_sensor = DEVICE_DT_GET(DT_NODELABEL(temp));
+
+static struct k_work_delayable temperature_work;
+
+static void temperature_work_handler(struct k_work *work)
+{
+	int err;
+	struct sensor_value temp_value;
+	int16_t centitemp; // Temperature in centi-degrees Celsius
+
+	err = sensor_sample_fetch(temp_sensor);
+	if (err)
+	{
+		LOG_ERR("Failed to fetch temperature sample with error %d", err);
+		k_work_reschedule(&temperature_work, K_SECONDS(CONFIG_TEMPERATURE_MEASUREMENT_INTERVAL));
+		return;
+	}
+
+	err = sensor_channel_get(temp_sensor, SENSOR_CHAN_DIE_TEMP, &temp_value);
+	if (err)
+	{
+		LOG_ERR("Failed to get temperature value with error %d", err);
+		k_work_reschedule(&temperature_work, K_SECONDS(CONFIG_TEMPERATURE_MEASUREMENT_INTERVAL));
+		return;
+	}
+
+	centitemp = temp_value.val1 * 100 + temp_value.val2 / 10000;
+	LOG_INF("Temperature: %d.%02d C", centitemp / 100, centitemp % 100);
+
+	tgm_service_send_temp_notify(centitemp);
+
+	k_work_reschedule(&temperature_work, K_SECONDS(CONFIG_TEMPERATURE_MEASUREMENT_INTERVAL));
+}
 
 int32_t battery_voltage_read(void)
 {
@@ -55,6 +89,9 @@ int main(void)
 	}
 
 	tgm_service_init(&tgm_service_callbacks);
+
+	// Initialize the temperature monitoring
+	k_work_init_delayable(&temperature_work, temperature_work_handler);
 
 	ble_adv_start();
 
@@ -106,6 +143,8 @@ int main(void)
 	{
 		LOG_ERR("Failed to start the accelerometer sensor with error %d", err);
 	}
+
+	k_work_reschedule(&temperature_work, K_NO_WAIT);
 
 	return 0;
 }

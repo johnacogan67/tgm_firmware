@@ -28,6 +28,12 @@ config ACC_SAMPLES_PER_FRAME
     help
       Battery sampling interval in seconds.
 
+  config TEMPERATURE_MEASUREMENT_INTERVAL
+    int "Temperature measurement interval"
+    default 1
+    help
+      Temperature sampling interval in seconds.
+
 module = APP
 module-str = APP
 source "subsys/logging/Kconfig.template.log_config"

@@ -76,17 +76,13 @@ struct tgm_service_acc_data_t
     struct acc_sample acc_data[CONFIG_ACC_SAMPLES_PER_FRAME];
 };
 
-struct temp_sample
-{
-    int16_t temp;
-};
 /** @brief Temperature Data Struct used by the TGM service to inform the client of new temperature data. */
 struct tgm_service_temp_data_t
 {
     /** Frame counter*/
     uint32_t frame_counter;
     /** Temperature data. */
-    struct temp_sample temp_data[CONFIG_TEMP_SAMPLES_PER_FRAME];
+    int16_t centitemp;
 };
 
 /** @brief Callback type for when PPG data is pulled. */
@@ -157,13 +153,13 @@ int tgm_service_send_acc_notify(struct acc_sample *acc_data, uint8_t sample_cnt)
  * This function notifies the connected client device of an update to the temperature
  * data
  *
- * @param[in] temp_data tgm_service_temp_data_t struct containing a frame counter and temperature sensor data
+ * @param[in] new_temp Temperature value in centi-degrees Celsius (int16)
  *
  *
  * @retval 0 If the operation was successful.
  *           Otherwise, a (negative) error code is returned.
  */
-int tgm_service_send_temp_notify(struct tgm_service_temp_data_t *temp_data);
+int tgm_service_send_temp_notify(int16_t new_temp);
 
 /** @brief Notify the client of a battery value change.
  *

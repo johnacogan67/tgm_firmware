@@ -88,8 +88,16 @@ Each frame is built up as follows as structure of type tgm_service_acc_data_t (s
 
 ### Streaming battery voltage
 
-The device will stream battery voltage data at an interval defined by CONFIG_BATTERY_MEASUREMENT_INTERVAL. The default value is set to 300 seconds (5 minutes but this value can be modified based on requirements
+The device will stream battery voltage data at an interval defined by CONFIG_BATTERY_MEASUREMENT_INTERVAL. The default value is set to 300 seconds (5 minutes), but this value can be modified based on requirements
 
 #### Parsing the battery voltage data
 
 The battery voltage is sent as a int32_t, which means that 4 bytes are sent with every measurement event. The value of the battery voltage is reported in mV.
+
+### Streaming temperature
+
+The device will stream the temperature of the BLE module at an interval defined by CONFIG_TEMPERATURE_MEASUREMENT_INTERVAL. The default value is set to 1 second, but this value can be modified based on requirements.
+
+### Parsing the temperature
+
+Each frame consists of 8 bytes. The first 4 bytes indicate the frame counter and bytes 5-6 encode the temperature as a signed integer in centidegree Celsius unit (1/100 of a degree), so the value of 2137 is equal to 21.37°C.

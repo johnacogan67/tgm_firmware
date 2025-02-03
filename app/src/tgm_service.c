@@ -259,14 +259,17 @@ int tgm_service_send_acc_notify(struct acc_sample *acc_data, uint8_t sample_cnt)
     return bt_gatt_notify(NULL, &tgm_service_svc.attrs[12], &acc_data_notify, sizeof(struct tgm_service_acc_data_t));
 }
 
-int tgm_service_send_temp_notify(struct tgm_service_temp_data_t *new_temp_data)
+int tgm_service_send_temp_notify(int16_t new_temp)
 {
+    tgm_service_temp_data.frame_counter++;
+    tgm_service_temp_data.centitemp = new_temp;
+
     if (!notify_temp_data)
     {
         return -EACCES;
     }
 
-    return bt_gatt_notify(NULL, &tgm_service_svc.attrs[15], new_temp_data, sizeof(*new_temp_data));
+    return bt_gatt_notify(NULL, &tgm_service_svc.attrs[15], &tgm_service_temp_data, sizeof(tgm_service_temp_data));
 }
 
 int tgm_service_send_read_ppg_reg_notify(uint8_t ppg_reg_data)
