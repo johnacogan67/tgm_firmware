@@ -232,3 +232,16 @@ static void ppg_reg_work_handler(struct k_work *work)
 
     return;
 }
+
+int ppg_set_led_pa(enum ppg_led_t led, uint8_t pa)
+{
+    int err;
+
+    err = ppg_write_reg(MAXM86161_REG_LED1_PA + led, pa);
+    if (err)
+    {
+        LOG_ERR("Failed to set PPG LED PA for LED %d", led);
+    }
+
+    return 0;
+}

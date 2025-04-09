@@ -7,64 +7,6 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(maxm86161, CONFIG_MAXM86161_LOG_LEVEL);
 
-typedef enum
-{
-	// Status
-	MAXM86161_REG_INT_STAT_1 = 0x00,
-	MAXM86161_REG_INT_STAT_2 = 0x01,
-	MAXM86161_REG_INT_EN_1 = 0x02,
-	MAXM86161_REG_INT_EN_2 = 0x03,
-
-	// Fifo
-	MAXM86161_REG_FIFO_W_PTR = 0x04,
-	MAXM86161_REG_FIFO_R_PTR = 0x05,
-	MAXM86161_REG_FIFO_OVF_CNT = 0x06,
-	MAXM86161_REG_FIFO_DATA_CNT = 0x07,
-	MAXM86161_REG_FIFO_DATA = 0x08,
-	MAXM86161_REG_FIFO_CONFIG1 = 0x09,
-	MAXM86161_REG_FIFO_CONFIG2 = 0x0A,
-
-	// System Control
-	MAXM86161_REG_SYSTEM_CONTROL = 0x0D,
-
-	// PPG Config
-	MAXM86161_REG_PPG_SYNC_CTRL = 0x10,
-	MAXM86161_REG_PPG_CONFIG1 = 0x11,
-	MAXM86161_REG_PPG_CONFIG2 = 0x12,
-	MAXM86161_REG_PPG_CONFIG3 = 0x13,
-	MAXM86161_REG_PROX_INT_TH = 0x14,
-	MAXM86161_REG_PHOTO_DIODE_BIAS = 0x15,
-
-	// PPG Picket Fence Detect and Replace
-	MAXM86161_REG_PICKET_FENCE = 0x16,
-
-	// LED Sequence Control
-	MAXM86161_REG_LED_SEQ_REG1 = 0x20,
-	MAXM86161_REG_LED_SEQ_REG2 = 0x21,
-	MAXM86161_REG_LED_SEQ_REG3 = 0x22,
-
-	// LED Pulse Amplitude
-	MAXM86161_REG_LED1_PA = 0x23,
-	MAXM86161_REG_LED2_PA = 0x24,
-	MAXM86161_REG_LED3_PA = 0x25,
-	MAXM86161_REG_LED4_PA = 0x26,
-	MAXM86161_REG_LED5_PA = 0x27,
-	MAXM86161_REG_LED6_PA = 0x28,
-	MAXM86161_REG_LED_PILOT_PA = 0x29,
-	MAXM86161_REG_LED_RANGE1 = 0x2A,
-	MAXM86161_REG_LED_RANGE2 = 0x2B,
-
-	// Temp
-	MAXM86161_REG_TEMP_CONFIG = 0x40,
-	MAXM86161_REG_TEMP_INT = 0x41,
-	MAXM86161_REG_TEMP_FRAC = 0x42,
-
-	// Part ID
-	MAXM86161_REG_REV_ID = 0xFE,
-	MAXM86161_REG_PART_ID = 0xFF,
-
-} MAXM86161_REG_map_t;
-
 // Use R, IR and Green
 #define COLORS 3u
 
@@ -114,7 +56,7 @@ int ppg_sensor_start(const struct i2c_dt_spec *i2c)
 
 	// Set the drive strength of the LEDs (green = LED1, ir = LED2, red = LED3)
 	// TODO tune these values, each count = 0.12mA with LED range set to 31mA
-	uint8_t led_pa[3] = {128, 128, 128};
+	uint8_t led_pa[3] = {0, 0, 0};
 	err = i2c_burst_write_dt(i2c, MAXM86161_REG_LED1_PA, led_pa, 3);
 	if (err)
 	{
@@ -208,7 +150,7 @@ int ppg_sensor_get_data(const struct i2c_dt_spec *i2c, struct ppg_sample *ppg_da
 
 		if (fifo_data_count > CONFIG_PPG_SAMPLES_PER_FRAME * COLORS)
 		{
-			LOG_WRN("FIFO overflow detected, discarding data");
+			LOG_WRN("FIFO overflow detected, discarding data (samples = %d)", fifo_data_count);
 			fifo_data_count = CONFIG_PPG_SAMPLES_PER_FRAME * COLORS;
 		}
 	}
